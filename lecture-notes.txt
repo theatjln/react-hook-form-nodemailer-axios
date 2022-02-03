@@ -1,0 +1,145 @@
+(docs for react-hook-form: https://react-hook-form.com/)
+
+1. install three packages (react-hook-form, axios, nodemailer):
+  npm i react-hook-form axios nodemailer
+
+2. import {useForm} from "react-hook-form" (in the page where the form is)
+
+3. deconstruct functions from useForm():
+  const { register, handleSubmit, errors, reset } = useForm();
+
+4. register your inputs:
+  e.g. <input type="text" ref={register} />
+
+5. add onSubmit property with value: handleSubmit() to your form, and add a parameter which is your custom function to the handleSubmit() function.
+  e.g.  <form action="" onSubmit={handleSubmit(onSubmitFormHandler)}></form>
+
+5. check if the onSubmit property is working by console logging values on your onSubmitFormHandler function:
+  e.g. 
+  function onSubmitFormHandler(values) {
+    console.log(values)
+  }
+
+6. if it logs the values in the console, proceed to adding validation parameters to register function in ref properties:
+  e.g.
+     <input
+      name="email"
+      type="text"
+      ref={register({
+        required: {
+          value: true,
+          message: "You must enter your email address",
+        },
+        minLength: {
+          value: 8,
+          message: "This is not long enough to be an email",
+        },
+        maxLength: {
+          value: 120,
+          message: "This is too long",
+        },
+        pattern: {
+          value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+          message: "This needs to be a valid email address",
+        },
+      })}
+      className={`block w-full shadow py-3 px-4 placeholder-gray-500 focus:ring-blue-500 focus:border-blue-500 border-gray-300 rounded-md focus:outline-none focus:ring-2`}
+      placeholder="Email"
+    />
+
+7. add error message prompt below input tag when there's error in an input:
+  e.g. 
+  <span className="text-red-400 text-sm py-2">
+    {errors?.email?.message}
+  </span>
+
+8. add error styling classes in input tag when there's error in input:
+  e.g.
+  className={`block w-full shadow py-3 px-4 placeholder-gray-500 focus:ring-blue-500 focus:border-blue-500 border-gray-300 rounded-md focus:outline-none focus:ring-2 ${
+    errors.email ? "ring-2 ring-red-500" : null
+  }`}
+  placeholder="Email"
+
+9. import axios now and use it to send the data via http request using the onSubmitFormHandler function: 
+  import axios from "axios"
+
+   async function onSubmitFormHandler(values) { 
+      // console.log(values);
+
+     let config = {
+      method: 'post',
+      // url: `${process.env.NEXT_PUBLIC_API_URL}/api/contact`,
+      url: "/api/contact"`,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      data: values,
+    };
+
+    try {
+      const response = await axios(config);
+      console.log(response);
+      if (response.status == 200) {
+        reset();
+        router.push('/');
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+
+10. create an '.env.local' file in your root folder and add the environment variable - NEXT_PUBLIC_API_URL with the value of your localhost url:
+e.g. 
+in env.local file, write
+  NEXT_PUBLIC_API_URL=http://localhost:3000
+
+11. create an api route: create file in pages/api folder and add a file (e.g. contact.js), 
+add your api configurations in that file
+  11.1 test your values if it reaches the api:
+    add these to contact.js:
+      
+      export default async (req, res) => {
+        console.log(req.body)
+        res.status(200).json(req.body)
+      }
+    
+    then, fill your form and submit. if you see your body contents on the server console, then your onSubmitFormHandler function is working
+
+12. import nodemailer in api/contact.js now and use it to send the body content as an email. Use smtp gmail:
+
+  // create configuration for the nodemailer transporter
+  const transporter = nodemailer.createTransport({
+    host: "smtp.gmail.com",
+    port: 465,
+    secure: true,
+    auth: {
+      user: process.env.user,
+      pass: process.env.pass,
+    },
+  });
+
+13. check for errors: after the transporter configuration, make the send email function inside a try catch to check for errors:
+    try {
+    const emailRes = await transporter.sendMail({
+      from: email,
+      to: "markmarkusviajero.contents@gmail.com",
+      subject: `Contact form submission from ${name}`,
+      html: `<div style="text-align: center;">
+      <h3>You have a contact form submission</h3> <br>
+      <p> <strong>From: </strong> ${name} (${email}) </p>
+      <p> <strong>Phone: </strong> ${phone} </p>
+      <p> <strong>Message: </strong> ${message} </p>
+      </div>`,
+    });
+    console.log("Message sent", emailRes.messageId);
+  } catch (error) {
+    console.log(error)
+  }
+
+14. setup your environment variable user and password in gmail:
+  in env.local, add:
+  user=YOUR_GMAIL_USERNAME
+  pass=YOUR_GMAIL_API_PASSWORD
+
+15. fill your form and submit, make sure your gmail account allows 'Less secure app access', then check if you received the email. (if you did, your code is correct)
