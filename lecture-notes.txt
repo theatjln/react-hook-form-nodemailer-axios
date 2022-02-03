@@ -1,4 +1,5 @@
 (docs for react-hook-form: https://react-hook-form.com/)
+(docs for nodemailer: https://nodemailer.com/about/)
 
 1. install three packages (react-hook-form, axios, nodemailer):
   npm i react-hook-form axios nodemailer
